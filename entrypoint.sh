@@ -5,7 +5,6 @@
 
 set -e
 
-sleep 30
 python3 submissionscript/this.py /scripts/ "$MYSQL_USER" mysql_container "$MYSQL_DATABASE" "$MYSQL_PASSWORD"
 
 sleep infinity

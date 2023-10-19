@@ -13,6 +13,11 @@ services:
       MYSQL_USER: dev
       MYSQL_PASSWORD: 123456
       MYSQL_DATABASE: devopstt
+    healthcheck:
+        test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "--user=root", "--password=123456"]
+        interval: 10s
+        timeout: 20s
+        retries: 10
 
   exec_ubuntu_container:
     container_name: exec_container
@@ -28,4 +33,5 @@ services:
     volumes:
       - ./submissionscript/:/submissionscript/
     depends_on:
-      - mysql_db_container
+      mysql_db_container:
+        condition: service_healthy

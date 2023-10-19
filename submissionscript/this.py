@@ -44,25 +44,40 @@ def migrate_mysql_to_latest(to_migrate, mysql_user, mysql_host, mysql_database_n
     :param mysql_user_password: the mysql username password
     :return: just the execution log as stdout
     """
-    db_config = {
-        "host": mysql_host,
-        "user": mysql_user,
-        "password": mysql_user_password,
-        "database": mysql_database_name,
-    }
-    conn = mysql.connector.connect(**db_config)
-    cursor = conn.cursor()
-    for version, script in to_migrate:
-        try:
-            with open(script, 'r') as script_file:
+    try:
+        conn = mysql.connector.connect(
+            host=mysql_host,
+            user=mysql_user,
+            password=mysql_user_password,
+            database=mysql_database_name
+        )
+        cursor = conn.cursor()
+        # The database upgrade is based on looking up the current version
+        # in the database and comparing this number to the numbers in the script names
+        cursor.execute("SELECT version FROM versionTable")
+        init_version = cursor.fetchone()[0]
+        just_versions = [version for version, _ in to_migrate]
+        last_version = just_versions[-1]
+        # If the version number from the db matches the highest number from the scripts then nothing is executed
+        if init_version == last_version:
+            print(f"No need to execute the SQL migrations at all. The DB is already at the latest version #{init_version}.")
+            return
+        # All scripts that contain a number higher than the current db version
+        # will be executed against the database in numerical order
+        to_migrate_filtered = [(version, script) for version, script in to_migrate if version > init_version]
+        for version, script in to_migrate_filtered:
+            with open(script, "r") as script_file:
                 script_content = script_file.read()
-            cursor.execute(script_content)
-            update_query = "UPDATE versionTable SET version = %s"
-            cursor.execute(update_query, (version,))
-            conn.commit()
-            print(f"Script '{script}' executed and version updated to {version}")
-        except Exception as e:
-            print(f"Error while executing '{script}': {str(e)}")
+                cursor.execute(script_content)
+                update_query = "UPDATE versionTable SET version = %s"
+                cursor.execute(update_query, (version,))
+                conn.commit()
+                print(f"Script '{script}' executed and versionTable updated to version #{version}")
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+    finally:
+        if 'conn' in locals():
+            conn.close()
 
 
 if __name__ == "__main__":

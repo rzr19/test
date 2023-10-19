@@ -5,6 +5,7 @@
 
 set -e
 
+echo "The SQL migrations will begin shortly." && sleep 20
 python3 submissionscript/this.py /scripts/ "$MYSQL_USER" mysql_container "$MYSQL_DATABASE" "$MYSQL_PASSWORD"
 
 sleep infinity

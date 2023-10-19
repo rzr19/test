@@ -16,23 +16,17 @@ def get_migration_files_and_versions(dir):
     migrations_versions_tuple = []
     try:
         if os.path.exists(dir) and os.path.isdir(dir):
-            files = [
-                f
-                for f in os.listdir(dir)
-                if os.path.isfile(os.path.join(dir, f)) and f.endswith(".sql")
-            ]
+            files = [f for f in os.listdir(dir) if os.path.isfile(os.path.join(dir, f)) and f.endswith(".sql")]
             for file in files:
                 full_file_path = os.path.join(dir, file)
                 match = re.match(r"^\d+", file)
                 if match:
                     number = int(match.group())
                     migrations_versions_tuple.append((number, full_file_path))
-            sorted_migrations_versions_tuple = sorted(
-                migrations_versions_tuple, key=lambda x: x[0]
-            )
+            sorted_migrations_versions_tuple = sorted(migrations_versions_tuple, key=lambda x: x[0])
             return sorted_migrations_versions_tuple
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
+        print(f"Error: {str(e)}")
 
 
 def migrate_mysql_to_latest(to_migrate, mysql_user, mysql_host, mysql_database_name, mysql_user_password):
